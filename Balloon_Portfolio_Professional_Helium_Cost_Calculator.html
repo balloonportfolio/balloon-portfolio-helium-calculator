@@ -79,6 +79,20 @@ button{font:inherit;padding:10px 14px;border:1px solid #aeb9c8;background:white;
 </table>
 <p class="small">T-bubble values use the manufacturer figures supplied for this chart.</p>
 
+<h2>Custom foil balloons</h2>
+<p class="small">Use the helium capacity in cubic metres (m³) stated by the foil balloon manufacturer. Add a description, enter the capacity per balloon, and enter the quantity needed. You can use the rows for different foil designs in the same job.</p>
+<table>
+<thead><tr><th>Foil balloon description / size</th><th>Manufacturer helium capacity per balloon (m³)</th><th>Quantity</th></tr></thead>
+<tbody>
+<tr><td><input class="foil-description" aria-label="Foil balloon 1 description" type="text" placeholder="e.g. 18-inch star"></td><td><input class="foil-volume" aria-label="Foil balloon 1 helium capacity in cubic metres" type="number" min="0" step="0.0001" placeholder="e.g. 0.012"></td><td><input class="qty foil-quantity" aria-label="Quantity of foil balloon 1" type="number" min="0" step="1" value="0"></td></tr>
+<tr><td><input class="foil-description" aria-label="Foil balloon 2 description" type="text" placeholder="e.g. character foil"></td><td><input class="foil-volume" aria-label="Foil balloon 2 helium capacity in cubic metres" type="number" min="0" step="0.0001"></td><td><input class="qty foil-quantity" aria-label="Quantity of foil balloon 2" type="number" min="0" step="1" value="0"></td></tr>
+<tr><td><input class="foil-description" aria-label="Foil balloon 3 description" type="text" placeholder="e.g. number foil"></td><td><input class="foil-volume" aria-label="Foil balloon 3 helium capacity in cubic metres" type="number" min="0" step="0.0001"></td><td><input class="qty foil-quantity" aria-label="Quantity of foil balloon 3" type="number" min="0" step="1" value="0"></td></tr>
+<tr><td><input class="foil-description" aria-label="Foil balloon 4 description" type="text" placeholder="e.g. shaped foil"></td><td><input class="foil-volume" aria-label="Foil balloon 4 helium capacity in cubic metres" type="number" min="0" step="0.0001"></td><td><input class="qty foil-quantity" aria-label="Quantity of foil balloon 4" type="number" min="0" step="1" value="0"></td></tr>
+<tr><td><input class="foil-description" aria-label="Foil balloon 5 description" type="text" placeholder="e.g. another foil"></td><td><input class="foil-volume" aria-label="Foil balloon 5 helium capacity in cubic metres" type="number" min="0" step="0.0001"></td><td><input class="qty foil-quantity" aria-label="Quantity of foil balloon 5" type="number" min="0" step="1" value="0"></td></tr>
+</tbody>
+</table>
+<p id="foilWarning" class="small" role="alert" style="color:#9b2c2c;font-weight:600" hidden>Please enter the manufacturer's helium capacity in m³ for every foil balloon row with a quantity above zero. The whole-job total will appear when these figures are entered.</p>
+
 <div class="result" aria-live="polite">
 <h2 style="margin-top:0;border:0">Whole-job estimate</h2>
 <div class="resultline"><span>Helium for listed balloons</span><strong id="base">0.000 m³</strong></div>
@@ -98,13 +112,32 @@ function calculate(){
   const waste=Math.min(100,Math.max(0,Number(document.getElementById('waste').value)||0))/100;
   let base=0;
   document.querySelectorAll('.balloon').forEach(el=>{base+=Math.max(0,Math.floor(Number(el.value)||0))*Number(el.dataset.volume)});
+  let missingFoilCapacity=false;
+  const foilQuantities=document.querySelectorAll('.foil-quantity');
+  const foilVolumes=document.querySelectorAll('.foil-volume');
+  foilQuantities.forEach((el,i)=>{
+    const qty=Math.max(0,Math.floor(Number(el.value)||0));
+    const rawVolume=foilVolumes[i].value;
+    const volume=Math.max(0,Number(rawVolume)||0);
+    if(qty>0 && (rawVolume==='' || volume<=0)) missingFoilCapacity=true;
+    base+=qty*volume;
+  });
+  const warning=document.getElementById('foilWarning');
+  warning.hidden=!missingFoilCapacity;
+  if(missingFoilCapacity){
+    document.getElementById('base').textContent='Complete foil capacities';
+    document.getElementById('total').textContent='Complete foil capacities';
+    document.getElementById('cylinders').textContent='Complete foil capacities';
+    document.getElementById('cost').textContent='Complete foil capacities';
+    return;
+  }
   const total=base*(1+waste);
   document.getElementById('base').textContent=fmt(base)+' m³';
   document.getElementById('total').textContent=fmt(total)+' m³';
   document.getElementById('cylinders').textContent=cap>0?fmt(total/cap,2):'Enter capacity';
   document.getElementById('cost').textContent=(cap>0 && document.getElementById('price').value!=='')?pounds(total*(price/cap)):'Enter cylinder cost';
 }
-function resetQuantities(){document.querySelectorAll('.balloon').forEach(el=>el.value=0);calculate()}
+function resetQuantities(){document.querySelectorAll('.balloon,.foil-quantity').forEach(el=>el.value=0);calculate()}
 document.querySelectorAll('input').forEach(el=>el.addEventListener('input',calculate));
 calculate();
 </script>
